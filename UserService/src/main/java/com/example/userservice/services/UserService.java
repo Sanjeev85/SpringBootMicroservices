@@ -37,14 +37,16 @@ public class UserService {
         var user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException(userId));
         // fetch user rating
         // localhost:8083/ratings/user/9f6b23d5-5a6d-4779-952b-8f5dce7396b9
-        var url = "http://localhost:8083/ratings/user/" + userId;
+        var url = "http://RATING-SERVICE/ratings/user/" + userId;
         var ratingOfUser = restTemplate.getForObject(url, Rating[].class);
 
 //        assert ratingOfUser != null;
         var ratings = Arrays.asList(ratingOfUser);
 
+        System.out.println("got rating of user**********"+ratings);
+
         var ratingList = ratings.stream().map(rating -> {
-            var hotelUrl = "http://localhost:8082/hotels/" + rating.getHotelId();
+            var hotelUrl = "http://HOTEL-SERVICE/hotels/" + rating.getHotelId();
             var hotel = restTemplate.getForEntity(hotelUrl, Hotel.class);
 //            System.out.println("got from hotel URL" + hotel);
             rating.setHotel(hotel.getBody());

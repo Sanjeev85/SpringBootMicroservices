@@ -3,7 +3,7 @@ spring:
     mongodb:
       uri: mongodb://localhost:27017/products
   application:
-    name: HOTEL_SERVICE
+    name: HOTEL-SERVICE
 server:
   port: 8082
 
