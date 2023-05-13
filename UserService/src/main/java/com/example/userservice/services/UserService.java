@@ -4,7 +4,10 @@ import com.example.userservice.entities.Hotel;
 import com.example.userservice.entities.Rating;
 import com.example.userservice.entities.User;
 import com.example.userservice.exceptions.ResourceNotFoundException;
+import com.example.userservice.external.service.HotelService;
+import com.example.userservice.external.service.RatingService;
 import com.example.userservice.repositories.UserRepository;
+import com.netflix.discovery.converters.Auto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -23,6 +26,13 @@ public class UserService {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private HotelService hotelService;
+
+    @Autowired
+    private RatingService ratingService;
+
+
     public User saveUser(User user) {
         var uid = UUID.randomUUID().toString();
         user.setUserId(uid);
@@ -34,27 +44,17 @@ public class UserService {
     }
 
     public User getUser(String userId) {
+
         var user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException(userId));
-        // fetch user rating
-        // localhost:8083/ratings/user/9f6b23d5-5a6d-4779-952b-8f5dce7396b9
-        var url = "http://RATING-SERVICE/ratings/user/" + userId;
-        var ratingOfUser = restTemplate.getForObject(url, Rating[].class);
+        // rating microservice communication
+        var ratings = Arrays.asList(ratingService.getRating(userId));
 
-//        assert ratingOfUser != null;
-        var ratings = Arrays.asList(ratingOfUser);
-
-        System.out.println("got rating of user**********"+ratings);
-
-        var ratingList = ratings.stream().map(rating -> {
-            var hotelUrl = "http://HOTEL-SERVICE/hotels/" + rating.getHotelId();
-            var hotel = restTemplate.getForEntity(hotelUrl, Hotel.class);
-//            System.out.println("got from hotel URL" + hotel);
-            rating.setHotel(hotel.getBody());
-            return rating;
+        var ratingList = ratings.stream().peek(rating -> {
+            // hotel microservice communication
+            var hotel = hotelService.getHotel(rating.getHotelId());
+            rating.setHotel(hotel);
         }).toList();
 
-
-//        System.out.println("------------" + ratingList);
         user.setRatings(ratingList);
 
         return user;
