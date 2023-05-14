@@ -8,6 +8,7 @@ import org.springframework.web.client.RestTemplate;
 
 @Configuration
 public class MyConfig {
+    // load balanced used for using SERVICE-NAME instead of port number
     @Bean
     @LoadBalanced
     public RestTemplate restTemplate() {
